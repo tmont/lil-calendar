@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Lil Calendar</title>
+		<style>
+			body {
+				margin: 0;
+				color: black;
+				font-family: sans-serif;
+				background-color: ivory;
+			}
+			#lil-calendar {
+				display: flex;
+				justify-content: center;
+			}
+			#lil-calendar caption {
+				margin-bottom: 5px;
+				font-weight: bold;
+				font-size: 125%;
+			}
+			#lil-calendar caption a {
+				text-decoration: none;
+				color: inherit;
+			}
+			#lil-calendar table .date-value {
+				position: absolute;
+				right: 3px;
+				top: 3px;
+				font-size: 90%;
+			}
+			#lil-calendar table thead th {
+				border: none;
+				border-bottom: 2px solid black;
+			}
+			#lil-calendar table .today {
+				background-color: rgba(255, 128, 0, 0.25);
+				color: #FF8000;
+				font-weight: bold;
+			}
+
+			#lil-calendar table .prev-month,
+			#lil-calendar table .next-month {
+				background-color: rgba(204, 204, 204, 0.5);
+				border: 1px solid #CCCCCC;
+				color: rgba(0, 0, 0, 0.35);
+			}
+
+			#lil-calendar table {
+				border-collapse: collapse;
+			}
+			#lil-calendar th {
+				padding: 4px 8px;
+				border: 1px solid gray;
+			}
+			#lil-calendar tbody td {
+				position: relative;
+				border: 1px solid gray;
+				text-align: right;
+				width: 70px;
+				height: 70px;
+
+			}
+		</style>
+	</head>
+	<body>
+		<noscript>
+			<h1>Sorry, this thing requires JavaScript.</h1>
+		</noscript>
+		<div id="lil-calendar">
+			<table>
+				<caption>
+					<a href="#">&#x25c2;</a>
+					<select>
+						<option value="0">January</option>
+						<option value="1">February</option>
+						<option value="2">March</option>
+						<option value="3">April</option>
+						<option value="4">May</option>
+						<option value="5">June</option>
+						<option value="6">July</option>
+						<option value="7">August</option>
+						<option value="8">September</option>
+						<option value="9">October</option>
+						<option value="10">November</option>
+						<option value="11">December</option>
+					</select>
+					<input type="text" size="4" maxlength="4" />
+					<a href="#">&#x25b8;</a>
+				</caption>
+				<thead>
+					<tr>
+						<th>Sun</th>
+						<th>Mon</th>
+						<th>Tue</th>
+						<th>Wed</th>
+						<th>Thu</th>
+						<th>Fri</th>
+						<th>Sat</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+		<script>
+			(function() {
+				var cal = document.getElementById('lil-calendar');
+				var caption = cal.querySelector('caption');
+				var tbody = cal.querySelector('tbody');
+				var prevMonthLink = caption.querySelectorAll('a')[0];
+				var nextMonthLink = caption.querySelectorAll('a')[1];
+				var monthSelector = caption.querySelector('select');
+				var yearSelector = caption.querySelector('input');
+				var currentDate = new Date();
+				var centeredDate = new Date();
+				var today = new Date();
+
+				function parseHash() {
+					var hash = window.location.hash;
+					if (hash) {
+						hash = hash.substring(1);
+						var match = /^(\d\d\d\d)-(\d\d?)(?:-(\d\d?))$/.exec(hash);
+						if (match) {
+							var year = match[1];
+							var month = parseInt(match[2]) - 1;
+							var day = match[3] ? parseInt(match[3]) : 1;
+							currentDate = new Date(year, month, day, 0, 0, 0);
+							centeredDate = new Date(currentDate); //center it on the given date
+							return true;
+						}
+					}
+
+					return false;
+				}
+
+				parseHash();
+
+				prevMonthLink.addEventListener('click', function(e) {
+					e.preventDefault();
+					currentDate.setMonth(currentDate.getMonth() - 1);
+					render();
+				});
+				nextMonthLink.addEventListener('click', function(e) {
+					e.preventDefault();
+					currentDate.setMonth(currentDate.getMonth() + 1);
+					render();
+				});
+
+				monthSelector.addEventListener('change', function(e) {
+					currentDate.setMonth(monthSelector.value);
+					render();
+				});
+
+				window.addEventListener('hashchange', function() {
+					if (parseHash()) {
+						render();
+					}
+				});
+
+				function updateYear() {
+					var year = yearSelector.value;
+					if (/^\d{1,4}$/.test(year)) {
+						currentDate.setFullYear(year);
+						render();
+					}
+				}
+
+				yearSelector.addEventListener('blur', updateYear);
+				yearSelector.addEventListener('keyup', function(e) {
+					if (e.keyCode === 13) {
+						updateYear();
+					}
+				});
+
+				function render() {
+					var currentRows = tbody.querySelectorAll('tr'), i;
+					for (i = 0; i < currentRows.length; i++) {
+						currentRows[i].parentNode.removeChild(currentRows[i]);
+					}
+
+					var renderedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+					var monthNum = renderedDate.getMonth();
+					var nextMonth = (renderedDate.getMonth() + 1) % 12;
+					yearSelector.value = renderedDate.getFullYear();
+					monthSelector.value = monthNum;
+
+					renderedDate.setDate(renderedDate.getDate() - renderedDate.getDay());
+
+					var weekRow = null;
+					var rows = [];
+
+					while (
+						renderedDate.getMonth() !== nextMonth ||
+						(renderedDate.getMonth() === nextMonth && renderedDate.getDay() !== 0)) {
+						var dayOfWeek = renderedDate.getDay();
+
+						if (!weekRow || dayOfWeek === 0) {
+							weekRow = document.createElement('tr');
+							rows.push(weekRow);
+						}
+
+						var dayCell = document.createElement('td');
+						var title = renderedDate.toDateString();
+						if (renderedDate.getMonth() !== monthNum) {
+							dayCell.className = renderedDate.getMonth() < monthNum ? 'prev-month' : 'next-month';
+						} else if (renderedDate.getMonth() === centeredDate.getMonth() &&
+							renderedDate.getDate() === centeredDate.getDate()) {
+							dayCell.className = 'today';
+							if (renderedDate.getMonth() === today.getMonth() &&
+									renderedDate.getDate() === today.getDate()) {
+								title += ' (today)';
+							}
+						}
+
+						var dayCellTitle = document.createElement('span');
+						dayCellTitle.textContent = renderedDate.getDate();
+						dayCellTitle.className = 'date-value';
+						dayCell.appendChild(dayCellTitle);
+						dayCell.setAttribute('title', title);
+						weekRow.appendChild(dayCell);
+
+						renderedDate.setDate(renderedDate.getDate() + 1);
+					}
+
+					rows.forEach(function(row) {
+						tbody.appendChild(row);
+					});
+				}
+
+				render();
+			}());
+		</script>
+	</body>
+</html>
