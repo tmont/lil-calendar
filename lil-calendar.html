@@ -204,11 +204,14 @@
 						var title = renderedDate.toDateString();
 						if (renderedDate.getMonth() !== monthNum) {
 							dayCell.className = renderedDate.getMonth() < monthNum ? 'prev-month' : 'next-month';
-						} else if (renderedDate.getMonth() === centeredDate.getMonth() &&
+						} else if (
+							renderedDate.getMonth() === centeredDate.getMonth() &&
+							renderedDate.getFullYear() === centeredDate.getFullYear() &&
 							renderedDate.getDate() === centeredDate.getDate()) {
 							dayCell.className = 'today';
 							if (renderedDate.getMonth() === today.getMonth() &&
-									renderedDate.getDate() === today.getDate()) {
+								renderedDate.getFullYear() === today.getFullYear() &&
+								renderedDate.getDate() === today.getDate()) {
 								title += ' (today)';
 							}
 						}
